@@ -21,6 +21,8 @@ class MovieListSpider(scrapy.Spider):
         # TODO extract only valid links
         link_list = response.selector.xpath(
             f'//div[@class="mw-parser-output"]/ul[preceding::h2[./span[@id="{year}_films"]]]/li/a[contains(text(), "List of")]/@href').getall()
+        if year >= 2006 and year <= 2009:
+            link_list = response.selector.xpath('//ul[following-sibling::h2/span[contains(@id,"Births")]]/li/a/@href').getall()
         if len(link_list) > 0:  # true for the later years
             link_prefix = 'https://en.wikipedia.org'
             for link in link_list:
@@ -55,6 +57,14 @@ class MovieListSpider(scrapy.Spider):
             link_list = response.selector.xpath(
                 '//table/tbody[tr/th[contains(text(),"Title")]]/tr/td/i/a/@href').getall()
             print('4')
+
+        # if not prev. look for Tamil films shema
+
+        if len(link_list) == 0:
+            link_list = response.selector.xpath(
+                '//table/tbody[./tr/th[contains(text(),"Opening")]]/tr/td/i/a/@href').getall()
+            print('5')
+
         # TODO if not prev. print url for checking what went wrong
         if len(link_list) == 0:
             print("Fail:", response.url)
