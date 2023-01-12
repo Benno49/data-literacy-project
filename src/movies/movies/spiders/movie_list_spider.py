@@ -18,7 +18,6 @@ class MovieListSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse_year, cb_kwargs=dict(year=year))
 
     def parse_year(self, response, year):
-        # TODO extract only valid links
         link_list = response.selector.xpath(
             f'//div[@class="mw-parser-output"]/ul[preceding::h2[./span[@id="{year}_films"]]]/li/a[contains(text(), "List of")]/@href').getall()
         if year == 2019:
@@ -43,32 +42,30 @@ class MovieListSpider(scrapy.Spider):
             f'//ul[preceding::h2[./span[@id="Notable_films_released_in_{year}"]] and following-sibling::h2[./span['
             '@id="Deaths"]]]/li/i/a/@href').getall()
         print('1')
-        # TODO if not prev. look for https://en.wikipedia.org/wiki/List_of_Tamil_films_of_2005
+        # if not prev. look for https://en.wikipedia.org/wiki/List_of_Tamil_films_of_2005
         if len(link_list) == 0:
             link_list = response.selector.xpath(
                 '//table[preceding-sibling::h2[./span[contains(@id,"List_of_")]]]/tbody/tr[preceding-sibling::tr/th['
                 'contains(text(),"Opening")]]/td/i/a/@href').getall()
             print('2')
-        # TODO if not prev. look for tabel with Title in header th column and link (new format)
+        # if not prev. look for tabel with Title in header th column and link (new format)
         if len(link_list) == 0:
             link_list = response.selector.xpath(
                 '//table/tbody/tr[preceding-sibling::tr/th[contains(text(),"Opening")]]/td/i/a/@href').getall()
             print('3')
-        # TODO if not prev. look for https: // en.wikipedia.org / wiki / List_of_French_films_of_2005
-
+        # if not prev. look for https: // en.wikipedia.org / wiki / List_of_French_films_of_2005
         if len(link_list) == 0:
             link_list = response.selector.xpath(
                 '//table/tbody[tr/th[contains(text(),"Title")]]/tr/td/i/a/@href').getall()
             print('4')
 
         # if not prev. look for Tamil films shema
-
         if len(link_list) == 0:
             link_list = response.selector.xpath(
                 '//table/tbody[./tr/th[contains(text(),"Opening")]]/tr/td/i/a/@href').getall()
             print('5')
 
-        # TODO if not prev. print url for checking what went wrong
+        # if not prev. print url for checking what went wrong
         if len(link_list) == 0:
             print("Fail:", response.url)
             print('5')
@@ -76,4 +73,3 @@ class MovieListSpider(scrapy.Spider):
         for link in link_list:
             yield {"link": link, "year": year}
 
-# TODO check resulting list for duplicates
