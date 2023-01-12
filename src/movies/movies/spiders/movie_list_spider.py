@@ -8,12 +8,12 @@ class MovieListSpider(scrapy.Spider):
     """
     name = "MOVIE_LIST_SPIDER"
     year_list_extractor = LinkExtractor(allow=[r"/wiki/List_of_American_films_of_\d+"])
-    download_delay = 5
+    download_delay = 2
 
     def start_requests(self):
         url_start = 'https://en.wikipedia.org/wiki/'
         url_end = '_in_film'
-        for year in range(1950, 2023):
+        for year in range(2000, 2023):
             url = url_start + str(year) + url_end
             yield scrapy.Request(url=url, callback=self.parse_year, cb_kwargs=dict(year=year))
 
@@ -21,6 +21,9 @@ class MovieListSpider(scrapy.Spider):
         # TODO extract only valid links
         link_list = response.selector.xpath(
             f'//div[@class="mw-parser-output"]/ul[preceding::h2[./span[@id="{year}_films"]]]/li/a[contains(text(), "List of")]/@href').getall()
+        if year == 2019:
+            link_list = response.selector.xpath(
+                f'//div[@class="mw-parser-output"]/ul[preceding::h2[./span[@id="List_of_{year}_films"]]]/li/a[contains(text(), "List of")]/@href').getall()
         if year >= 2006 and year <= 2009:
             link_list = response.selector.xpath('//ul[following-sibling::h2/span[contains(@id,"Births")]]/li/a/@href').getall()
         if len(link_list) > 0:  # true for the later years
