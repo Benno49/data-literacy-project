@@ -46,6 +46,11 @@ class MovieInfoSpider(scrapy.Spider):
             data_list.append(' '.join(multiline_list))
             multiline_ref_list = line.xpath('td/div[not(contains(@class,"plain-list"))]/a/text()').getall()
             data_list.append(' '.join(multiline_ref_list))
+            # für produktion companies lists mit style div
+            data_list += line.xpath(
+                'td/div[not(contains(@class,"plain-list"))]/div[contains(@class,"plainlist")]/ul/li/text()').getall()
+            data_list += line.xpath(
+                'td/div[not(contains(@class,"plain-list"))]/div[contains(@class,"plainlist")]/ul/li/a/text()').getall()
 
             infobox_dict[category] = data_list
 
@@ -106,10 +111,6 @@ class MovieInfoSpider(scrapy.Spider):
             movie_info_dict['rottentomatoes_length'] = rottentomatoes_length
 
             yield movie_info_dict
-
-
-
-
 
     def clean_spaces(self, s):
         s = re.sub('[ \n]*$', '', s)
