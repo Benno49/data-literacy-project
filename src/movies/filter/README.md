@@ -1,3 +1,7 @@
+### Inflation Rates Worldwide IMF
+Database from [IMF](https://data.imf.org). Since this a non-commercial study, according to their [Terms & Uses](https://www.imf.org/external/terms.htm)
+we should be allowed to include their dataset within our repository.
+
 ### Inflation Rates USA
 Taken from https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/
 
