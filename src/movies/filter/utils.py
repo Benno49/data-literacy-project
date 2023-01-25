@@ -56,11 +56,14 @@ def cal_and_plot_p_values(x, groups_list: list, p_value: float, save_path: str):
     plt.gcf().subplots_adjust(bottom=0.22, left=0.2)
     plt.savefig(save_path)
 
+    return pc
+
 
 def one_hot_groups_p_value(df: pd.DataFrame, score_column: str, groups_list: list, p_value: float, save_path: str):
     x = [df[score_column][df[bool_column]].dropna() for bool_column in groups_list]
 
-    cal_and_plot_p_values(x, groups_list, p_value, save_path)
+    p_map = cal_and_plot_p_values(x, groups_list, p_value, save_path)
+    return p_map
 
 
 def column_groups_p_value(df: pd.DataFrame, score_column: str, groups_column: str, p_value: float, save_path: str,
@@ -69,7 +72,9 @@ def column_groups_p_value(df: pd.DataFrame, score_column: str, groups_column: st
         groups_list = df[groups_column].value_counts().keys()
     x = [df[score_column][df[groups_column] == group].dropna() for group in groups_list]
 
-    cal_and_plot_p_values(x, groups_list, p_value, save_path)
+    p_map = cal_and_plot_p_values(x, groups_list, p_value, save_path)
+
+    return p_map
 
 
 def corr_p_value(df: pd.DataFrame, score_column: str, value_column: str):

@@ -144,15 +144,12 @@ plt.setp(ax.get_yticklabels(), rotation=0, ha="right")
 plt.gcf().subplots_adjust(bottom=0.22, left=0.2)
 plt.show()
 
-one_hot_groups_p_value(df, 'audience_score', ['Drama', 'Comedy', 'Mystery&thriller', 'Action', 'Romance', 'Horror',
-                                              'Adventure', 'Crime', 'Kids&family', 'Sci-fi', 'Documentary', 'Fantasy',
-                                              'History', 'Biography', 'Musical', 'Western', 'War', 'Holiday',
-                                              'Lgbtq+', 'Animation'], 0.05, 'test.png')
-
-one_hot_groups_p_value(df, 'audience_score', ['Drama', 'Comedy', 'Mystery&thriller', 'Action', 'Romance', 'Horror',
-                                              'Adventure', 'Crime', 'Kids&family', 'Sci-fi', 'Documentary', 'Fantasy',
-                                              'History', 'Biography', 'Musical', 'Western', 'War', 'Holiday',
-                                              'Lgbtq+', 'Animation'], 0.05, 'test.png')
+print('Genre:')
+p_map = one_hot_groups_p_value(df, 'audience_score',
+                               ['Drama', 'Comedy', 'Mystery&thriller', 'Action', 'Romance', 'Horror',
+                                'Adventure', 'Crime', 'Kids&family', 'Sci-fi', 'Documentary', 'Fantasy',
+                                'History', 'Biography', 'Musical', 'Western', 'War', 'Holiday',
+                                'Lgbtq+', 'Animation'], 0.05, 'test.png')
 
 print(corr_p_value(df, 'audience_score', 'budget'))
 print(corr_p_value(df, 'audience_score', 'box_office'))
