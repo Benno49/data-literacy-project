@@ -69,7 +69,7 @@
     These Wikipedia entries won't contain a link to their corresponding entry on Rotten Tomatoes. To acquire this entry without needing several steps (search, compare, filter) to eventually get to the corresponding entry, we used an heuristic approach.\\
     We found out that Rotten Tomatoes filters their URL entries before redirecting to the appropriate URL and resource. Using this information, we took the name of the movie, we could simply append the name of the movie to the URL.
     This works pretty well but is susceptible to remakes or different movies with the same name, e.g. Batman (1943), Batman (1966) and Batman (1989)\cite{batman_remakes}.
-    Again we use heuristics to acquire the correct entry by simply appending the year to the query as in \texttt{"$<$movie\_name$>$\_$<$yyyy$>$"}. If we get a result we use it for our entry, otherwise we try querying the film without this appendix.
+    Again we use heuristics to acquire the correct entry by simply appending the year to the query as in \texttt{"$<$movie\_name$>$\_$<$yyyy$>$"}. If we don't get a result we try querying the film title without this appendix.
     Both data entries from Rotten Tomatoes (if any) and Wikipedia are then combined in our unrefined database. This way we acquired 19366 entries. %\\
     % The process of the data collection is also visualized in this Activity Diagram(\ref{fig:data_col_flow}).
     % % Might have to be deleted since it takes up too much space
@@ -129,27 +129,27 @@
         \caption{p-values of a simple anova}
         \label{fig:variance_p}
     \end{figure}\\
-    In figure \ref{fig:variance_p} we see that for all three we reject the zero hypothesis for each of these three scores.\\
+    In figure (\ref{fig:variance_p}) we see that for all three we reject the zero hypothesis for each of these three scores.\\
     To further analyse between the means of which groups we see a significant difference in there mean, we use post hoc tests. The post hoc test uses a student t-test to test the differences between each pair of groups. The hypothesises for the student t test are as follows:
     \begin{enumerate}
         \item[H0:] The mean scores of the two groups are equal.
         \item[H1:] The mean scores of the two groups are different.
     \end{enumerate}
-    For a significance level of 0.05 we get that the following percentages of the groups reject the zero hypothesis:\\
+    For a significance level of 0.05 we get that the following percentages of the groups reject the zero hypothesis (\ref{fig:hypo_rejection}).
     \noindent
-    \begin{figure}[h]
+    \begin{figure}[t]
         \centering
         \includegraphics[width=1\textwidth]{imgs/prozent.png}
         \caption{percentage of the pairs of groups with significant deviation in mean messured by a student-t test}
         \label{fig:hypo_rejection}
     \end{figure}
-    \FloatBarrier
+    % \FloatBarrier
     From this we can assume that genres, suppliers and release month offer use useful information for predicting our 3 target scores.
 
     \paragraph{Metric parameters}
-    For metric parameters correlation is usually a good score to look at, when deciding whether a parameter contains useful information for our prediction or not. We used the pearsonr test, that has zero correlation as its zero hypothesis and a no-zero correlation as its alternative hypothesis. We got the following p-values:\\
+    For metric parameters correlation is usually a good score to look at, when deciding whether a parameter contains useful information for our prediction or not. We used the pearsonr test, that has zero correlation as its zero hypothesis and a no-zero correlation as its alternative hypothesis which returns p-values as depicted in figure (\ref{fig:hypo_rejection}).\\
     \noindent
-    \begin{figure}[h]
+    \begin{figure}[t]
         \centering
         \includegraphics[width=0.94\textwidth]{imgs/metric_p.png}
         \caption{p-values of the pearsonr test}
@@ -183,7 +183,7 @@
     We see that the model suffers from overfitting (\ref{fig:mae_errors}). We tried to combat this be introducing L2-Regularizers, randomness in the choices on the decision-tree of CatBoost and adjusting the learning rate. Neither of them helped. 
     
     \paragraph{Neural Networks with PyTorch}
-    Using PyTorch we created a model with three Hidden Layers (hidden width = 2 times input width) using Tanh, Leaky ReLU and ReLU as activation functions. It was not possible to use a higher Batch size since then our model would only generalize to predict the mean (similiar to linear Regression) thus the results depicted in (\ref{fig:mae_errors}) are created not using batches at all. But similarly to the CatBoost Regressor, only with slightly higher mean errors and less iterations, we achieve overfitting of the training samples and slight reduction in the test error. 
+    Using PyTorch we created a model with three Hidden Layers (hidden width = 2 times input width) using Tanh, Leaky ReLU and ReLU as activation functions. It was not possible to use a higher Batch size since then our model would only generalize to predict the mean (similiar to linear Regression) thus the results depicted in figure (\ref{fig:mae_errors}) are created not using batches at all. But similarly to the CatBoost Regressor, only with slightly higher mean errors and less iterations, we achieve overfitting of the training samples and slight reduction in the test error. 
     
     \paragraph{Conclusion}
     We conclude that probably our parameters are not strong enough to predict either the score or the divergence. Our relatively low quantity of data (8000 training samples) is most likely too sparse for our objective and thus the algorithm only overfits without any significant generalization. But we could also observe that the predictions for the audience's score were more accurate, indicating that the audience score is possibly most influenced by the parameters we chose. There are more parameters such as production company, gender ratio of cast and producers that could be included already in our gathered data. Many more can be found by scraping more sources of data. The number of samples is way harder to increase, because the number of films released with scores on rotten tomatoes is limited.
@@ -196,6 +196,7 @@
         \label{fig:mae_errors}
     \end{figure}
 
+\clearpage
 \bibliographystyle{abbrv}
 \bibliography{sources}
 
