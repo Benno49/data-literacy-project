@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import SubplotBase
 from scipy.stats import f_oneway, linregress
 import scikit_posthocs as sp
+from scipy.stats.stats import pearsonr
 
 
 def flatten(deep_list: list) -> list:
@@ -27,7 +28,7 @@ def one_hot_categories(df: pd.DataFrame, column: str, min_occurences: int,
     value_list = pd.Series(entry_list).value_counts()[pd.Series(entry_list).value_counts() >= min_occurences].keys()
 
     for value in value_list:
-        df[value] = df['column'].transform(lambda x: list_contains(x, value))
+        df[value] = df[column].transform(lambda x: list_contains(x, value))
 
     return df, value_list
 
@@ -39,8 +40,9 @@ def parse_genre(genre_entry: str) -> list[str]:
 
 
 def cal_and_plot_p_values(x, groups_list: list, p_value: float, save_path: str):
-    print(f_oneway(*x))
-
+    result_anova = f_oneway(*x)
+    print(result_anova)
+    p = result_anova.pvalue
     pc = sp.posthoc_ttest(x, equal_var=False)
 
     p_005 = (np.array(pc.to_numpy()) <= p_value).astype(int)
@@ -56,7 +58,7 @@ def cal_and_plot_p_values(x, groups_list: list, p_value: float, save_path: str):
     plt.gcf().subplots_adjust(bottom=0.22, left=0.2)
     plt.savefig(save_path)
 
-    return pc
+    return p, pc
 
 
 def one_hot_groups_p_value(df: pd.DataFrame, score_column: str, groups_list: list, p_value: float, save_path: str):
@@ -79,4 +81,7 @@ def column_groups_p_value(df: pd.DataFrame, score_column: str, groups_column: st
 
 def corr_p_value(df: pd.DataFrame, score_column: str, value_column: str):
     df = df[[score_column, value_column]].dropna()
-    print(linregress(df[score_column], df[value_column]))
+
+    test_result = pearsonr(df[score_column], df[value_column])
+    print(test_result)
+    return test_result.pvalue
