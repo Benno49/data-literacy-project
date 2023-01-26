@@ -1,3 +1,4 @@
+import ast
 import re
 from collections.abc import Iterable
 from typing import Optional
@@ -5,8 +6,11 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
+from matplotlib.table import Table
+from pandas.plotting import table
 
-from filter.utils import corr_p_value, one_hot_groups_p_value, column_groups_p_value
+from filter.utils import corr_p_value, one_hot_groups_p_value, column_groups_p_value, one_hot_categories
 
 
 def flatten(deep_list: list) -> list:
@@ -65,6 +69,9 @@ print(df['month'])
 print(df['running_time'])
 print(' '.join(df['running_time'][0]))
 
+df['divergence_score'] = df['audience_score'] - df['critics_score']
+print(df['divergence_score'])
+
 
 # print(df['running_time'].transform(lambda x: ' '.join(x)))
 
@@ -106,7 +113,7 @@ print(df)
 print(df['audience_score'][df['Drama']].dropna())
 genre_groups = [df['audience_score'][df[genre]].dropna() for genre in genres]
 
-from scipy.stats import f_oneway, kruskal
+from scipy.stats import f_oneway, kruskal, pearsonr
 
 print(f_oneway(*genre_groups))
 print(kruskal(*genre_groups))
@@ -150,6 +157,17 @@ p_map = one_hot_groups_p_value(df, 'audience_score',
                                 'Adventure', 'Crime', 'Kids&family', 'Sci-fi', 'Documentary', 'Fantasy',
                                 'History', 'Biography', 'Musical', 'Western', 'War', 'Holiday',
                                 'Lgbtq+', 'Animation'], 0.05, 'test.png')
+print(p_map)
+
+targets = ['audience_score', 'critics_score', 'divergence_score']
+metric_params = ['year', 'rottentomatoes_length', 'budget', 'box_office']
+
+metric_p_df = pd.DataFrame(index=targets)
+for param in metric_params:
+    param_p_list = []
+    for target in targets:
+        p = corr_p_value(df, 'audience_score', 'budget')
+    metric_p_df[param] = pd.Series(param_p_list)
 
 print(corr_p_value(df, 'audience_score', 'budget'))
 print(corr_p_value(df, 'audience_score', 'box_office'))
@@ -159,6 +177,197 @@ print(corr_p_value(df, 'audience_score', 'rottentomatoes_length'))
 print(corr_p_value(df, 'critics_score', 'budget'))
 print(corr_p_value(df, 'critics_score', 'box_office'))
 print(corr_p_value(df, 'critics_score', 'year'))
-print(corr_p_value(df, 'audience_score', 'rottentomatoes_length'))
+print(corr_p_value(df, 'critics_score', 'rottentomatoes_length'))
+
+print(corr_p_value(df, 'divergence_score', 'budget'))
+print(corr_p_value(df, 'divergence_score', 'box_office'))
+print(corr_p_value(df, 'divergence_score', 'year'))
+print(corr_p_value(df, 'divergence_score', 'rottentomatoes_length'))
 
 column_groups_p_value(df, 'critics_score', 'month', 0.05, 'month_p.png', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
+
+def streaming_suppliers(suppliers: str):
+    streaming_suppliers = []
+    if suppliers is None:
+        return streaming_suppliers
+    for supplier, offer in ast.literal_eval(suppliers):
+        if offer == 'Subscription':
+            streaming_suppliers.append(supplier)
+    return streaming_suppliers
+
+
+def flatten_list(deeplist):
+    return [entry for entrylist in deeplist for entry in entrylist]
+
+
+df['suppliers'] = df['suppliers_list'].transform(lambda x: streaming_suppliers(x))
+
+df, supplier_list = one_hot_categories(df, 'suppliers', 100)
+
+print('-----------------------------------')
+
+df["proportional_profit"] = df["box_office"].to_numpy() / df["budget"].to_numpy()
+df["proportional_profit"] = df["proportional_profit"].transform(lambda x: 0 if np.isnan(x) or np.isinf(x) else x)
+
+targets = ['audience_score', 'critics_score', 'divergence_score']
+metric_params = ['year', 'rottentomatoes_length', 'budget', 'box_office', 'proportional_profit']
+
+metric_p_df = pd.DataFrame(index=targets)
+for param in metric_params:
+    param_p_list = []
+    for target in targets:
+        p = corr_p_value(df, target, param)
+        param_p_list.append(p)
+    metric_p_df[param] = pd.Series(param_p_list, index=targets, dtype='float64')
+
+print(metric_p_df)
+df['genre'] = df['rottentomatoes_genre']
+print(df['genre'])
+group_params = ['genre', 'suppliers', 'month']
+group_params_type = ['onehot', 'onehot', 'categoriel']
+var_p_df = pd.DataFrame(index=targets)
+prozent_p_df = pd.DataFrame(index=targets)
+for param, param_type in zip(group_params, group_params_type):
+    param_p_list = []
+    param_proz_list = []
+    if param_type == 'onehot':
+        df, group_list = one_hot_categories(df, param, 100)
+    for target in targets:
+        if param_type == 'onehot':
+            p, p_df = one_hot_groups_p_value(df, target, group_list, 0.05, f'{param}.png')
+        elif param_type == 'categoriel':
+            p, p_df = column_groups_p_value(df, target, param, 0.05, f'{param}.png')
+        else:
+            raise ValueError()
+        print(p_df)
+        print(p_df.shape[0])
+        p_proz = (p_df <= 0.05).sum().sum() / (p_df.size - p_df.shape[0])
+        print(p_proz)
+        param_p_list.append(p)
+        param_proz_list.append(p_proz)
+    var_p_df[param] = pd.Series(param_p_list, index=targets, dtype='float64')
+    prozent_p_df[param] = pd.Series(param_proz_list, index=targets)
+
+print(var_p_df)
+print(prozent_p_df)
+
+
+def color_significant_green(val):
+    """
+    Takes a scalar and returns a string with
+    the css property `'color: red'` for negative
+    strings, black otherwise.
+    """
+    print('val:', val)
+    color = 'green' if val <= 0.05 else 'black'
+    return 'color: % s' % color
+
+
+# var_p_df.style.applymap(color_significant_green)
+
+
+metric_p_df_str = metric_p_df.applymap('{:,.1e}'.format)
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+cl_outcomes = {
+    'white': '#FFFFFF',
+    'gray': '#AAA9AD',
+    'black': '#313639',
+    'purple': '#AD688E',
+    'orange': '#D18F77',
+    'yellow': '#E8E190',
+    'ltgreen': '#CCD9C7',
+    'dkgreen': '#006400',
+}
+
+faded_text_color = cl_outcomes['gray']
+significant_text_color = cl_outcomes['dkgreen']
+
+print(metric_p_df_str.values)
+
+def plot_with_significance(df, colLabels=None, colWidths=None, save_path=None):
+    df_str = df.applymap('{:,.1e}'.format)
+
+    fig, ax = plt.subplots()
+    ax.axis('off')
+    ax.axis('tight')
+    if colLabels is None:
+        colLabels = df_str.columns
+    if colWidths is None:
+        colWidths = [0.3] * len(df_str.columns)
+    t: Table = ax.table(cellText=df_str.values, colWidths=colWidths,
+                        colLabels=colLabels,
+                        loc='center', rowLabels=df_str.index, edges='TR')
+    t.auto_set_font_size(False)
+    t.set_fontsize(8)
+    print(df.shape)
+    print(t[1, 2].get_text())
+    for j in range(df.values.shape[1]):
+        cell: Rectangle = t[0, j]
+        cell.visible_edges = 'BRL'
+        for i in range(df.values.shape[0]):
+            print(df.values[i, j])
+            cell = t[i + 1, j]
+            cell.get_text().set_horizontalalignment('center')
+            if df.values[i, j] >= 0.05:
+                cell.get_text().set_color(faded_text_color)
+    for i in range(df.values.shape[0]):
+        cell: Rectangle = t[i, df.values.shape[1]-1]
+        cell.visible_edges = 'BL'
+    cell: Rectangle = t[df.values.shape[0], df.values.shape[1]-1]
+    cell.visible_edges = 'L'
+
+    fig.tight_layout()
+    plt.show()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches='tight')
+
+def pretty_plot(df, colLabels=None, colWidths=None, save_path=None):
+    df_str = df.applymap('{:.2%}'.format)
+
+    fig, ax = plt.subplots()
+    ax.axis('off')
+    ax.axis('tight')
+    if colLabels is None:
+        colLabels = df_str.columns
+    if colWidths is None:
+        colWidths = [0.3] * len(df_str.columns)
+    t: Table = ax.table(cellText=df_str.values, colWidths=colWidths,
+                        colLabels=colLabels,
+                        loc='center', rowLabels=df_str.index, edges='TR')
+    t.auto_set_font_size(False)
+    t.set_fontsize(8)
+    print(df.shape)
+    print(t[1, 2].get_text())
+    for j in range(df.values.shape[1]):
+        cell: Rectangle = t[0, j]
+        cell.visible_edges = 'BRL'
+        for i in range(df.values.shape[0]):
+            print(df.values[i, j])
+            cell = t[i + 1, j]
+            cell.get_text().set_horizontalalignment('center')
+    for i in range(df.values.shape[0]):
+        cell: Rectangle = t[i, df.values.shape[1]-1]
+        cell.visible_edges = 'BL'
+    cell: Rectangle = t[df.values.shape[0], df.values.shape[1]-1]
+    cell.visible_edges = 'L'
+
+    fig.tight_layout()
+    plt.show()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches='tight')
+
+
+plot_with_significance(var_p_df, save_path='var_p.png')
+plot_with_significance(metric_p_df, colLabels=['year', 'length', 'budget', 'box_office', 'proportional_profit'], colWidths=[0.25,0.25,0.25,0.25,0.4], save_path='metric_p.png')
+pretty_plot(prozent_p_df, save_path='prozent.png')
+# *GENRE_VECTOR,
+#     *SUPPLIER_VECTOR,
+#     "rottentomatoes_length",
+#     "year",
+#     "month",
+#     "box_office",
+#     "budget",
