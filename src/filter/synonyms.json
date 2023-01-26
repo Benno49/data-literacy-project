@@ -1,0 +1,10 @@
+[
+    {"adapted_by": ["adaptation_by"]},
+    {"distributed_by": ["distributor"]},
+    {"edited_by": ["editor"]},
+    {"illustrated_by": ["illustrator"]},
+    {"produced_by": ["producer"]},
+    {"published_by": ["publisher"]},
+    {"release_date": ["release"]},
+    {"written_by": ["story_by"]}
+]
