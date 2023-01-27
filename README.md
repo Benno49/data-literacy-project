@@ -10,10 +10,10 @@ The full report is found [here](/src/presentation/Rotten_Tomatoes_Discrepancy.pd
 ## Project structure
 ### Data Collection
 The Data is collected from Wikipedia and Rotten Tomatoes using [Scrapy](https://scrapy.org/).  
-All unfiltered data is stored in [/src/movies/datasets](../../tree/main/src/movies/datasets).  
+All unfiltered data is stored in [/src/movies/datasets](/src/movies/datasets).  
 
 ### Data Filtering and Processing
-This part is covered in [/src/filter](../../tree/main/src/filter).  
+This part is covered in [/src/filter](/src/filter).  
 
 #### Filter
 The merging, filtering and converting process is performed in the notebook at [/src/filter/filter_dev.ipynb](/src/filter/filter_dev.ipynb).  
