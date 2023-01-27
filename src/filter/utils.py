@@ -7,6 +7,19 @@ from matplotlib.axes import SubplotBase
 from scipy.stats import f_oneway, linregress
 import scikit_posthocs as sp
 from scipy.stats.stats import pearsonr
+from pathlib import Path
+import subprocess
+
+
+def get_project_root() -> Path:
+    PIPE = subprocess.PIPE
+
+    process = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=PIPE, stderr=PIPE)
+    stdoutput, stderroutput = process.communicate()
+    if stdoutput.startswith(b"fatal") or stderroutput:
+        raise RuntimeError("jupyter notebook was not started within the git project!")
+    else:
+        return Path(stdoutput.strip().decode()).absolute()
 
 
 def flatten(deep_list: list) -> list:
