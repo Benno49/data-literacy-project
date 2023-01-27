@@ -23,6 +23,7 @@ The hypothesis tests are performed in [/src/filter/hypothesis_testing.py](/src/f
 The applied learning is performed in [/src/filter/tomatoes.ipynb](/src/filter/tomatoes.ipynb).  
 
 ## Execution
+This project requires at least python 3.10.  
 It should suffice to pull this repository and install all requirements with 
 ```sh
 python -m pip install -r requirements.txt
