@@ -30,6 +30,7 @@
 \usepackage{graphicx}
 \usepackage[]{placeins}
 
+
 \setlength{\parindent}{0pt}
 
 \title{Rotten Tomatoes Review Discrepancy}
@@ -50,27 +51,26 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-    This project investigates the discrepancies between official critics' and the audience's ratings for movies on Rotten Tomatoes. We want to find out if there are any regularities and if these are enough to predict the scores (or their discrepancy/divergence). This project covers the data gathering and the evaluation with Null-Hypothesis Tests, Linear Regression, Decision Trees and MLPs. Results show that there is not enough information to infer any significant results.
+    This project investigates the discrepancies between official critics' and the audience's ratings for movies on Rotten Tomatoes. We want to find out if there are any regularities and if those are enough to predict the scores or their discrepancy/divergence. This project covers the data gathering and the evaluation with null-hypothesis tests, linear regression, decision trees and MLPs. We conclude that there is not enough information to infer any significant results.
 \end{abstract}
 
 \section{Introduction}
-    There are a lot of websites rating the quality/perception of movies and TV series. One of the most popular ones is the US-American website \href{https://www.rottentomatoes.com}{https://www.rottentomatoes.com} \cite{rotten_about} which allows officially registered critics and the general audience to rate a movie resulting in a score between 0\% and 100\% for both voter categories. It is a relatively well known phenomenon that the opinions of these two parties often diverge and sometimes even by a huge amount. This observation can be made every so often and has thus obviously led to many discussions \cite{looper_divides}\cite{reddit_divide_1}\cite{reddit_divide_2}.\\
+    There are a lot of websites rating the quality/perception of movies and TV series. One of the most popular ones is the US-American website \href{https://www.rottentomatoes.com}{Rotten Tomatoes} \cite{rotten_about} which allows officially registered critics and the general audience to rate a movie resulting in a score between 0\% and 100\% for both voter categories. It is a well-known phenomenon that the opinions of these two parties often diverge, and sometimes even by a huge amount. This observation has led to many discussions \cite{looper_divides}\cite{reddit_divide_1}\cite{reddit_divide_2}.\\
     We want to know if there are any commonalities between the movies where ratings diverge and thus need a database where all this information is combined.  
-    We gather information about movies from the 1950s up to 2022 using Wikipedia lists and Rotten Tomatoes. We did not use \href{https://www.imdb.com/}{IMDb} since for us relevant data like the 'budget' or the 'box office' is hidden behind a paywall (IMDb Pro).
+    We gather information about movies from the 1950s up to 2022 using Wikipedia lists and Rotten Tomatoes. We did not use \href{https://www.imdb.com/}{IMDb}, because relevant data like \textit{budget} or \textit{box office revenue} is hidden behind a paywall (IMDb Pro).
 
 \section{Creating the Database}
-    Since we could not find a compact and accessible database containing the data we need, the first logical step was to create our own. This requires gathering data at first, repairing as much as possible and finally filtering unusable or wrong entries.\\
-    We use Python 3.10, Scrapy and Pandas for this process.
+    Since we could not find a compact and accessible database containing the data we need, the first step was to create our own database. We gathered the data via webscraping. For this process we used the library \textit{scrapy}. Furthermore we cleaned up the resulting data.\\
 
 \subsection{Collecting the data}
 % Benno plz correct me on this one
-    We start by initially crawling through Wikipedia collecting URLs to entries of a specific movie and their corresponding year of release. These movies are listed under sublists, containing all movies worldwide released in that year. Note that the year under which the movie is listed does not necessarily represent the actual time of release.\\
-    In a second crawler, this URL will then be used to gather information such as the name of the movie and the further more detailed information. \\
-    These Wikipedia entries won't contain a link to their corresponding entry on Rotten Tomatoes. To acquire this entry without needing several steps (search, compare, filter) to eventually get to the corresponding entry, we used an heuristic approach.\\
-    We found out that Rotten Tomatoes filters their URL entries before redirecting to the appropriate URL and resource. Using this information, we took the name of the movie, we could simply append the name of the movie to the URL.
-    This works pretty well but is susceptible to remakes or different movies with the same name, e.g. Batman (1943), Batman (1966) and Batman (1989)\cite{batman_remakes}.
-    Again we use heuristics to acquire the correct entry by simply appending the year to the query as in \texttt{"$<$movie\_name$>$\_$<$yyyy$>$"}. If we don't get a result we try querying the film title without this appendix.
-    Both data entries from Rotten Tomatoes (if any) and Wikipedia are then combined in our unrefined database. This way we acquired 19366 entries. %\\
+    We started by initially crawling through Wikipedia collecting URLs of entries for the movies together with their corresponding year of release. These movies are listed under sublists, containing all movies released worldwide in that year. A problem we faced was, that the websites on Wikipedia are not uniformly structured. This made crawling more difficult.\\
+    In a second crawler we used these URLs to gather information such as the name of the movie and further information. \\
+    These Wikipedia entries do not contain a link to their corresponding entry on Rotten Tomatoes. To acquire this entry without needing several steps (search, compare, filter) to eventually get to the corresponding entry, we used a heuristic approach:\\
+    We found out that urls of the movies on Rotten Tomatoes have the following structure. They start with a fixed prefix "www.rottentomatoes.com/m/" and end with the title of the movie. The spaces in the title are replaced by underscores.\\
+    This is modified for remakes or different movies with the same name, e.g. Batman (1943), Batman (1966) and Batman (1989)\cite{batman_remakes}.
+    Again we used a heuristic to acquire the correct entry by simply appending the year to the query as in \texttt{"$<$movie\_name$>$\_$<$yyyy$>$"}. If we didn't get a result in this way, we used the first heuristic.\\
+    We than combined the data we got from Rotten Tomatoes with the data we got from Wikipedia. This way we acquired 19366 entries. %\\
     % The process of the data collection is also visualized in this Activity Diagram(\ref{fig:data_col_flow}).
     % % Might have to be deleted since it takes up too much space
     % \begin{figure}[tb]
@@ -81,9 +81,9 @@
     % \end{figure}
 
 \subsection{Cleaning the data}
-    In order to verify/clean our data from the applied heuristic, we extracted the release date gathered from Wikipedia and compared it with the date gathered from Rotten Tomatoes. We assume that a movie with the same name would not be released in the same year and thus removed all entries where the two different dates diverged resulting in a loss of 222 entries. \\
-    One of our main goals for the data extraction was to gather information about the Box office (revenue) and the budget. Since our list contains movies from all around the world beginning from the 1950s, we have a lot of different currencies subjected to different inflation rates within our database. Furthermore, some of the Wikipedia entries already contain the converted currencies inclusive the inflation rate. In order to have a common ground, we convert all entries to US-Dollar with the inflation being accounted up to December 2022. We consider 15 different currencies, the release date and the potentially already converted values plus their corresponding date.\\
-    To calculate the inflation rate we use the average Consumer Price Index (CPI) for all items obtained from a database by the \href{https://data.imf.org/?sk=388dfa60-1d26-4ade-b505-a05a558d9a42}{International Monetary Fond (IMF)}. Using a \href{https://www.kaggle.com/datasets/thebasss/currency-exchange-rates}{dataset containing 52 different currencies} which is also based on IMF data, we can convert all currencies into US-Dollar.
+    In order to verify the combination of data from Rotten Tomatoes and Wikipedia, we extracted the release date gathered from Wikipedia and compared it with the date gathered from Rotten Tomatoes. We removed all entries where the two dates differed. In this process we discarded 222 entries. We assumed that movies with the same name released in the same year are identical. \\
+    One of our main goals for the data extraction was to gather information about box office revenue and budget. Since our list contains movies from all around the world starting in the 1950s, we had a lot of different currencies subjected to different inflation rates within our database. Furthermore, some of the Wikipedia entries already contain the converted currencies adjusted for inflation. For standardisation, we convert all entries to US dollar with the inflation being accounted up to December 2022. We considered 15 different currencies, the release date and the potentially already converted values plus their corresponding date.\\
+    To calculate the inflation rate we used the average Consumer Price Index (CPI) for all items obtained from a database by the \href{https://data.imf.org/?sk=388dfa60-1d26-4ade-b505-a05a558d9a42}{International Monetary Fond (IMF)}. Using a \href{https://www.kaggle.com/datasets/thebasss/currency-exchange-rates}{dataset containing 52 different currencies} which is also based on the IMF data, we can converted all currencies into US dollar.
 
     % Needed for next section
     % \begin{figure}[h]
@@ -113,41 +113,42 @@
     % \end{table}
 
 \subsection{Hypothesis tests}
-    First we decided to perform hypothesis tests to see, if our parameters influence our targets. Audience and critics score on rotten tomatoes measure the percentage of people who submitted a positive review. It makes sense to measure the distance between this scores. This extends to their discrepancy. Therefore our target is metric. This now allows us to find the correct hypothesis tests.
+    First we decided to perform hypothesis tests to see, if our parameters influence our targets. Audience and critics score on Rotten Tomatoes measure the percentage of people who submitted a positive review. It makes sense to measure the distance between these scores. This extends to their discrepancy. Therefore our target sorces are metric quantities. This now allows us to find the correct hypothesis tests.
     \paragraph{Parameters with multiple groups}
     For parameters that divide the data into multiple groups the corresponding hypothesis test is a simple analysis of variance combined with a post hoc test. In our case such parameters are the genre, streaming supplier and the release month.\\
-    For our simple analysis of variance the two hypothesises are as follows:
+    For our simple analysis of variance the two hypotheses are as follows:
     \begin{enumerate}
         \item[H0:] The mean scores of all groups are equal.
         \item[H1:] At least one of the mean scores of the groups differs.
     \end{enumerate}
     We set our significance level to 0.05.\\
     \noindent
-    \begin{figure}[h]
+    \begin{figure}[H]
         \centering
         \includegraphics[width=1\textwidth]{imgs/var_p.png}
         \caption{p-values of a simple anova}
         \label{fig:variance_p}
     \end{figure}\\
-    In figure (\ref{fig:variance_p}) we see that for all three we reject the zero hypothesis for each of these three scores.\\
-    To further analyse between the means of which groups we see a significant difference in there mean, we use post hoc tests. The post hoc test uses a student t-test to test the differences between each pair of groups. The hypothesises for the student t test are as follows:
+    % \FloatBarrier % Bitte auskommentiert lassen
+    In figure (\ref{fig:variance_p}) we see that for all three parameters we reject the null hypothesis for each of these three scores.\\
+    To further analyse between the means of which groups we see a significant difference in their mean, we use post hoc tests. The post hoc test uses a student's t-test to test differences between each pair of groups. The hypotheses for the student's t-test are as follows:
     \begin{enumerate}
         \item[H0:] The mean scores of the two groups are equal.
         \item[H1:] The mean scores of the two groups are different.
     \end{enumerate}
-    For a significance level of 0.05 we get that the following percentages of the groups reject the zero hypothesis (\ref{fig:hypo_rejection}).
+    %For a significance level of 0.05 we get that the following percentages of the groups reject the null hypothesis (\ref{fig:hypo_rejection}).
+    In figure \ref{fig:hypo_rejection} we see the percentages of the groups that reject the null hypothesis for a significance level of 0.05.
     \noindent
     \begin{figure}[t]
         \centering
         \includegraphics[width=1\textwidth]{imgs/prozent.png}
-        \caption{percentage of the pairs of groups with significant deviation in mean messured by a student-t test}
+        \caption{percentage of the pairs of groups with significant deviation in mean assessed by a student's t-test}
         \label{fig:hypo_rejection}
     \end{figure}
     % \FloatBarrier
     From this we can assume that genres, suppliers and release month offer use useful information for predicting our 3 target scores.
-
     \paragraph{Metric parameters}
-    For metric parameters correlation is usually a good score to look at, when deciding whether a parameter contains useful information for our prediction or not. We used the pearsonr test, that has zero correlation as its zero hypothesis and a no-zero correlation as its alternative hypothesis which returns p-values as depicted in figure (\ref{fig:hypo_rejection}).\\
+    For metric parameters correlation is usually a good score to look at when deciding whether a parameter contains useful information for our prediction or not. We used the pearsonr test, that has zero correlation as its null hypothesis and a non-zero correlation as its alternative hypothesis which returns p-values as depicted in figure (\ref{fig:hypo_rejection}).\\
     \noindent
     \begin{figure}[t]
         \centering
@@ -155,14 +156,14 @@
         \caption{p-values of the pearsonr test}
         \label{fig:hypo_rejection}
     \end{figure}\\
-    For year and film-length we reject the zero hypothesis for all 3 target scores. For the other parameter we only have enough evidence to reject the zero hypothesis for some of them. Since all of the parameters have a significant correlation to at least some of the target scores, we will include them in out training.
+    For year and film-length we reject the null hypothesis for all 3 target scores. For the other parameter we only have enough evidence to reject the null hypothesis for some of them. Since all of the parameters have a significant correlation to at least some of the target scores, we will include them in out training.
     
     
 \subsection{Regression}
-    As stated in the abstract, our goal was to predict the critics' score, the audience's score or the difference between the former (i.e. divergence).
+    As stated in the abstract, our goal was to predict the critics' score, the audience's score or the difference between the former (i.e., divergence).
     We used several different methods to transform our input parameters with significance to one of the three possible targets. All of the tested methods resulted in a bad fit.
     \paragraph{LinearRegression}
-    We tried fitting the data with a simple linear regression model from the sklearn library. This generally resulted in the model predicting the mean of the targets for the training samples, whereas the Audience Model was the only one which could apply this to the test samples as well. Both Divergence and especially the Critics Model performed conclusively worse (\ref{tab:lin_regression}).
+    We tried fitting the data with a simple linear regression model from the scikit-learn library. This generally resulted in the model predicting the mean of the targets for the training samples, whereas the Audience Model was the only one which could apply this to the test samples as well. Both Divergence and especially the Critics Model performed conclusively worse (\ref{tab:lin_regression}).
     \begin{table}[h]
         \centering
         \begin{tabular}{c||c|c|c|c}
@@ -177,18 +178,16 @@
         \caption{Linear Regression Scores and Mean Absolute Errors (MAE)}
         \label{tab:lin_regression}
     \end{table}
-
+    \vspace{-8pt}
     \paragraph{CatBoost}
     CatBoost works on the theory of decision trees. It uses many weak models sequentially, to create a strong model. To achieve our target we used the Regressor (\texttt{CatBoostRegressor}) model from the CatBoost library.
-    We see that the model suffers from overfitting (\ref{fig:mae_errors}). We tried to combat this be introducing L2-Regularizers, randomness in the choices on the decision-tree of CatBoost and adjusting the learning rate. Neither of them helped. 
+    We saw that the model suffers from overfitting (\ref{fig:mae_errors}). We tried to mitigate this by introducing L2-Regularizers, randomness in the choices on the decision-tree of CatBoost and adjusting the learning rate. Neither helped. 
     
     \paragraph{Neural Networks with PyTorch}
-    Using PyTorch we created a model with three Hidden Layers (hidden width = 2 times input width) using Tanh, Leaky ReLU and ReLU as activation functions. It was not possible to use a higher Batch size since then our model would only generalize to predict the mean (similiar to linear Regression) thus the results depicted in figure (\ref{fig:mae_errors}) are created not using batches at all. But similarly to the CatBoost Regressor, only with slightly higher mean errors and less iterations, we achieve overfitting of the training samples and slight reduction in the test error. 
+    Using PyTorch we created a model with three Hidden Layers (hidden width = 2 times input width) using Tanh, Leaky ReLU and ReLU as activation functions. It was not possible to use a higher batch size since then our model would only generalize to predict the mean (similiar to linear Regression) thus the results depicted in figure (\ref{fig:mae_errors}) are created not using batches at all. But similarly to the CatBoost Regressor, only with slightly higher mean errors and less iterations, we achieve overfitting of the training samples and slight reduction in the test error. 
     
-    \paragraph{Conclusion}
-    We conclude that probably our parameters are not strong enough to predict either the score or the divergence. Our relatively low quantity of data (8000 training samples) is most likely too sparse for our objective and thus the algorithm only overfits without any significant generalization. But we could also observe that the predictions for the audience's score were more accurate, indicating that the audience score is possibly most influenced by the parameters we chose. There are more parameters such as production company, gender ratio of cast and producers that could be included already in our gathered data. Many more can be found by scraping more sources of data. The number of samples is way harder to increase, because the number of films released with scores on rotten tomatoes is limited.
-    % Uns fehlen noch Angaben zum Mean und Varianz der Targets (i.e. Divergence MAE ist niedriger, aber varianz wird auch generell niedriger sein). Ok wenn du meinst wir brauchen das, sollte das wahrscheinlich zu analyse direkt??? Probably, aber ich denke es wäre nicht falsch die iwo stehen zu haben, damit besser nachvollziehbar ist, wie schwer die Daten zum erlernen sind OK
-    % Ok die Varianz von Divergence ist nicht wirklich niedriger, bloß der Mean
+    \section{Conclusion}
+    We conclude that probably our parameters do not contain enough information to predict either of the scores or the divergence. Our relatively low quantity of data (8000 training samples) is most likely too sparse for our objective and thus the algorithm only overfits without any significant generalization. But we could also observe that the predictions for the audience's score were more accurate, indicating that the audience score is possibly most influenced by the parameters we chose. There are more parameters such as production company, gender ratio of cast and producers that could be included in our gathered data. Many more can be found by scraping more sources of data. The number of samples is much harder to increase, because the number of films released with scores on Rotten Tomatoes is limited.
     \begin{figure}[tb]
         \centering
         \includegraphics[width=1\textwidth]{imgs/regression_errors.png}
@@ -197,6 +196,7 @@
     \end{figure}
 
 \clearpage
+% \appendix
 \bibliographystyle{abbrv}
 \bibliography{sources}
 
